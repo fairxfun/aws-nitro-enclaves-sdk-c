@@ -12,14 +12,14 @@ int main(int argc, char **argv) {
 
     /* Global static application context */
     struct kmstool_init_params params_init = {
-        .region = "",
+        .aws_region = "",
         .proxy_port = 8000,
         .aws_access_key_id = "",
         .aws_secret_access_key = "",
         .aws_session_token = "",
-        .key_id = "",
-        .encryption_algorithm = "SYMMETRIC_DEFAULT",
-        .with_logs = 1,
+        .kms_key_id = "",
+        .kms_encryption_algorithm = "SYMMETRIC_DEFAULT",
+        .enable_logging = 1,
     };
 
     kmstool_enclave_init(&params_init);
