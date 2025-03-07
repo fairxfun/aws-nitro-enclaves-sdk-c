@@ -1,12 +1,6 @@
 #ifndef KMSTOOL_TYPE_H
 #define KMSTOOL_TYPE_H
 
-#include <aws/nitro_enclaves/kms.h>
-#include <aws/nitro_enclaves/nitro_enclaves.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 struct app_ctx {
     /* Allocator to use for memory allocations. */
     struct aws_allocator *allocator;
@@ -21,7 +15,7 @@ struct app_ctx {
     /* KMS aws_region to use. */
     struct aws_string *aws_region;
     /* vsock port on which vsock-proxy is available in parent. */
-    uint32_t proxy_port;
+    unsigned int proxy_port;
 
     /* KMS credentials */
     struct aws_string *aws_access_key_id;

@@ -5,9 +5,6 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
-#include <stdint.h>
-
 /**
  * @file kmstool_enclave_lib.h
  * @brief Public interface for the AWS KMS Tool Enclave Library
@@ -32,7 +29,7 @@ enum KMSTOOL_STATUS {
  * @brief Initialization parameters for the KMS Tool enclave
  *
  * This structure contains all the necessary parameters to initialize
- * the KMS Tool enclave, including AWS credentials, aws_region settings,
+ * the KMS Tool enclave, including AWS credentials, region settings,
  * and encryption parameters.
  */
 struct kmstool_init_params {
@@ -42,7 +39,7 @@ struct kmstool_init_params {
     const unsigned int proxy_port;
 
     /* AWS configuration */
-    const char *aws_region;            /* AWS aws_region for KMS operations */
+    const char *aws_region;            /* AWS region for KMS operations */
     const char *aws_access_key_id;     /* AWS access key ID */
     const char *aws_secret_access_key; /* AWS secret access key */
     const char *aws_session_token;     /* AWS session token */
@@ -70,8 +67,8 @@ struct kmstool_update_aws_key_params {
  * This structure contains the data to be encrypted using KMS.
  */
 struct kmstool_encrypt_params {
-    const uint8_t *plaintext;   /* Data to encrypt */
-    const size_t plaintext_len; /* Length of data to encrypt */
+    const unsigned char *plaintext;   /* Data to encrypt */
+    const unsigned int plaintext_len; /* Length of data to encrypt */
 };
 
 /**
@@ -80,8 +77,8 @@ struct kmstool_encrypt_params {
  * This structure contains the data to be decrypted using KMS.
  */
 struct kmstool_decrypt_params {
-    const uint8_t *ciphertext;   /* Data to decrypt */
-    const size_t ciphertext_len; /* Length of data to decrypt */
+    const unsigned char *ciphertext;   /* Data to decrypt */
+    const unsigned int ciphertext_len; /* Length of data to decrypt */
 };
 
 /**
@@ -129,8 +126,8 @@ int kmstool_enclave_update_aws_key(const struct kmstool_update_aws_key_params *p
  */
 int kmstool_enclave_encrypt(
     const struct kmstool_encrypt_params *params,
-    uint8_t **ciphertext_out,
-    size_t *ciphertext_out_len);
+    unsigned char **ciphertext_out,
+    unsigned int *ciphertext_out_len);
 
 /**
  * @brief Decrypt data using KMS
@@ -145,8 +142,8 @@ int kmstool_enclave_encrypt(
  */
 int kmstool_enclave_decrypt(
     const struct kmstool_decrypt_params *params,
-    uint8_t **plaintext_out,
-    size_t *plaintext_out_len);
+    unsigned char **plaintext_out,
+    unsigned int *plaintext_out_len);
 
 #ifdef __cplusplus
 }

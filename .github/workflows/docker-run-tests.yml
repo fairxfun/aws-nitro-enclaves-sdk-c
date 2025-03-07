@@ -2,17 +2,16 @@ name: Docker Test CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image and run tests
-      run: docker build --target test -t test:$(date +%s) -f containers/Dockerfile.al2 .
+      - uses: actions/checkout@v4
+      - name: Build the Docker image and run tests
+        run: docker build --target test -t test:$(date +%s) -f containers/Dockerfile.al2 .
