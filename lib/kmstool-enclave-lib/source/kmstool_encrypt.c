@@ -25,8 +25,8 @@ static int encrypt_from_kms(
 int app_lib_encrypt(
     const struct app_ctx *ctx,
     const struct kmstool_encrypt_params *params,
-    uint8_t **ciphertext_out,
-    size_t *ciphertext_out_len) {
+    unsigned char **ciphertext_out,
+    unsigned int *ciphertext_out_len) {
     ssize_t rc = AWS_OP_ERR;
 
     if (params->plaintext == NULL || params->plaintext_len == 0) {

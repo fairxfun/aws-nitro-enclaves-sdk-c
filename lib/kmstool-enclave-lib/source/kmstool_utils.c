@@ -1,4 +1,4 @@
-#include "../include/kmstool_utils.h"
+#include "../include/kmstool.h"
 
 /* Encode the given text buffer to base64 and store it in text_b64 */
 int encode_b64(const struct app_ctx *ctx, const struct aws_byte_buf *text, struct aws_byte_buf *text_b64) {

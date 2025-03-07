@@ -24,8 +24,8 @@ static int decrypt_from_kms(
 int app_lib_decrypt(
     const struct app_ctx *ctx,
     const struct kmstool_decrypt_params *params,
-    uint8_t **plaintext_out,
-    size_t *plaintext_out_len) {
+    unsigned char **plaintext_out,
+    unsigned int *plaintext_out_len) {
     ssize_t rc = AWS_OP_ERR;
 
     if (params->ciphertext == NULL || params->ciphertext_len == 0) {

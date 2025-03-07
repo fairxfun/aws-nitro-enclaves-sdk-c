@@ -35,20 +35,20 @@ int main(int argc, char **argv) {
         struct kmstool_encrypt_params params_encrypt = {
             .plaintext = plaintext, .plaintext_len = strlen((char *)plaintext)};
 
-        uint8_t *output_enc = NULL;
-        size_t output_enc_len = 0;
+        unsigned char *output_enc = NULL;
+        unsigned int output_enc_len = 0;
         // Encrypt the plaintext.
         if (kmstool_enclave_encrypt(&params_encrypt, &output_enc, &output_enc_len) != 0 || output_enc == NULL) {
             fprintf(stderr, "Encryption failed at iteration %d\n", i);
             exit(EXIT_FAILURE);
         }
 
-        fprintf(stderr, "Encryption success with data length %ld\n", output_enc_len);
+        fprintf(stderr, "Encryption success with data length %d\n", output_enc_len);
 
         struct kmstool_decrypt_params params_decrypt = {.ciphertext = output_enc, .ciphertext_len = output_enc_len};
 
-        uint8_t *output_dec = NULL;
-        size_t output_dec_len = 0;
+        unsigned char *output_dec = NULL;
+        unsigned int output_dec_len = 0;
 
         // Decrypt the ciphertext.
         if (kmstool_enclave_decrypt(&params_decrypt, &output_dec, &output_dec_len) != 0 || output_dec == NULL) {
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         }
 
         if (strlen((char *)plaintext_check) != output_dec_len) {
-            fprintf(stderr, "Mismatch len expected %zu got %zu\n", strlen((char *)plaintext), output_dec_len);
+            fprintf(stderr, "Mismatch len expected %zu got %u\n", strlen((char *)plaintext), output_dec_len);
             free(output_enc);
             free(output_dec);
             exit(EXIT_FAILURE);
