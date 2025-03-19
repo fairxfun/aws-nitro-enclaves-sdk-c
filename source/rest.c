@@ -47,15 +47,22 @@ static void s_on_client_connection_setup(struct aws_http_connection *connection,
 }
 
 static void s_on_client_connection_shutdown(struct aws_http_connection *connection, int error_code, void *user_data) {
-    (void)connection;
-    (void)user_data;
+    struct aws_nitro_enclaves_rest_client *rest_client = user_data;
 
     fprintf(stderr, "Disconnected.\n");
-
     if (error_code) {
         fprintf(stderr, "Connection failed with error %s\n", aws_error_debug_str(error_code));
-        return;
     }
+
+    /* Clean up the connection */
+    aws_mutex_lock(&rest_client->mutex);
+    if (rest_client->connection == connection) {
+        rest_client->connection = NULL;
+    }
+    aws_mutex_unlock(&rest_client->mutex);
+
+    /* Notify any waiting threads */
+    aws_condition_variable_notify_all(&rest_client->c_var);
 }
 
 struct aws_nitro_enclaves_rest_client *aws_nitro_enclaves_rest_client_new(
