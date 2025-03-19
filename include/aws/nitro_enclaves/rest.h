@@ -88,6 +88,9 @@ struct aws_nitro_enclaves_rest_client {
     /** An open connection that is used to create connection streams. */
     struct aws_http_connection *connection;
 
+    /** Whether the connection is established. */
+    bool is_connected;
+
     /** The service used to determine the host name. Used in TLS and signing. */
     struct aws_string *service;
 

@@ -39,6 +39,7 @@ static void s_on_client_connection_setup(struct aws_http_connection *connection,
         /* A valid connection context. */
         aws_mutex_lock(&rest_client->mutex);
         rest_client->connection = connection;
+        rest_client->is_connected = true;
         aws_mutex_unlock(&rest_client->mutex);
     }
 
@@ -54,15 +55,9 @@ static void s_on_client_connection_shutdown(struct aws_http_connection *connecti
         fprintf(stderr, "Connection failed with error %s\n", aws_error_debug_str(error_code));
     }
 
-    /* Clean up the connection */
-    aws_mutex_lock(&rest_client->mutex);
     if (rest_client->connection == connection) {
-        rest_client->connection = NULL;
+        rest_client->is_connected = false;
     }
-    aws_mutex_unlock(&rest_client->mutex);
-
-    /* Notify any waiting threads */
-    aws_condition_variable_notify_all(&rest_client->c_var);
 }
 
 struct aws_nitro_enclaves_rest_client *aws_nitro_enclaves_rest_client_new(

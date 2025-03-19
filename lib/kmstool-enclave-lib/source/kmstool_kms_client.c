@@ -73,7 +73,7 @@ int kms_client_update(struct app_ctx *ctx) {
 int kms_client_check_and_update(struct app_ctx *ctx) {
     log_info("kms client check and update");
 
-    if (ctx->kms_client->rest_client->connection != NULL) {
+    if (ctx->kms_client->rest_client->is_connected) {
         log_info("kms client connection is established, no need to update");
         return KMSTOOL_SUCCESS;
     }
