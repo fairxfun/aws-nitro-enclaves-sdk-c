@@ -2,10 +2,18 @@
 
 /* Decrypt the given ciphertext using KMS and store the result in the plaintext buffer */
 static int decrypt_from_kms(
-    const struct app_ctx *ctx,
+    struct app_ctx *ctx,
     const struct kmstool_decrypt_params *params,
     struct aws_byte_buf *plaintext) {
     ssize_t rc = AWS_OP_ERR;
+
+    log_info("decrypt from kms");
+
+    rc = kms_client_check_and_update(ctx);
+    if (rc != KMSTOOL_SUCCESS) {
+        log_error("kms client connection is not established");
+        return rc;
+    }
 
     struct aws_byte_buf ciphertext = aws_byte_buf_from_array(params->ciphertext, params->ciphertext_len);
 
@@ -14,7 +22,7 @@ static int decrypt_from_kms(
         ctx->kms_client, ctx->kms_key_id, ctx->kms_encryption_algorithm, &ciphertext, plaintext);
     aws_byte_buf_clean_up_secure(&ciphertext);
     if (rc != AWS_OP_SUCCESS) {
-        fprintf(stderr, "Could not decrypt ciphertext\n");
+        log_error("could not decrypt ciphertext");
         return rc;
     }
 
@@ -22,14 +30,16 @@ static int decrypt_from_kms(
 }
 
 int app_lib_decrypt(
-    const struct app_ctx *ctx,
+    struct app_ctx *ctx,
     const struct kmstool_decrypt_params *params,
     unsigned char **plaintext_out,
     unsigned int *plaintext_out_len) {
     ssize_t rc = AWS_OP_ERR;
 
+    log_info("decrypt");
+
     if (params->ciphertext == NULL || params->ciphertext_len == 0) {
-        fprintf(stderr, "ciphertext should not be NULL or empty\n");
+        log_error("ciphertext should not be NULL or empty");
         *plaintext_out = NULL;
         *plaintext_out_len = 0;
         return KMSTOOL_ERROR;
@@ -38,7 +48,7 @@ int app_lib_decrypt(
     struct aws_byte_buf plaintext_buf = {0};
     rc = decrypt_from_kms(ctx, params, &plaintext_buf);
     if (rc != AWS_OP_SUCCESS) {
-        fprintf(stderr, "KMS decryption failed: %s\n", aws_error_str(aws_last_error()));
+        log_error("kms decryption failed");
         *plaintext_out = NULL;
         *plaintext_out_len = 0;
         return rc;
@@ -46,7 +56,7 @@ int app_lib_decrypt(
 
     uint8_t *output = malloc(plaintext_buf.len);
     if (output == NULL) {
-        fprintf(stderr, "Failed to allocate memory for plaintext output\n");
+        log_error("failed to allocate memory for plaintext output");
         aws_byte_buf_clean_up_secure(&plaintext_buf);
         *plaintext_out = NULL;
         *plaintext_out_len = 0;

@@ -39,6 +39,7 @@ static void s_on_client_connection_setup(struct aws_http_connection *connection,
         /* A valid connection context. */
         aws_mutex_lock(&rest_client->mutex);
         rest_client->connection = connection;
+        rest_client->is_connected = true;
         aws_mutex_unlock(&rest_client->mutex);
     }
 
@@ -47,14 +48,15 @@ static void s_on_client_connection_setup(struct aws_http_connection *connection,
 }
 
 static void s_on_client_connection_shutdown(struct aws_http_connection *connection, int error_code, void *user_data) {
-    (void)connection;
-    (void)user_data;
+    struct aws_nitro_enclaves_rest_client *rest_client = user_data;
 
     fprintf(stderr, "Disconnected.\n");
-
     if (error_code) {
         fprintf(stderr, "Connection failed with error %s\n", aws_error_debug_str(error_code));
-        return;
+    }
+
+    if (rest_client->connection == connection) {
+        rest_client->is_connected = false;
     }
 }
 

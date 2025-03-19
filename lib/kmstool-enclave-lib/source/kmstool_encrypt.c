@@ -4,10 +4,12 @@
 
 /* Encrypt the given plaintext using KMS and store the result in the ciphertext buffer */
 static int encrypt_from_kms(
-    const struct app_ctx *ctx,
+    struct app_ctx *ctx,
     const struct kmstool_encrypt_params *params,
     struct aws_byte_buf *ciphertext) {
     ssize_t rc = AWS_OP_ERR;
+
+    log_info("encrypt from kms");
 
     struct aws_byte_buf plaintext = aws_byte_buf_from_array(params->plaintext, params->plaintext_len);
 
@@ -15,7 +17,7 @@ static int encrypt_from_kms(
     rc = aws_kms_encrypt_blocking(ctx->kms_client, ctx->kms_key_id, &plaintext, ciphertext);
     aws_byte_buf_clean_up_secure(&plaintext);
     if (rc != AWS_OP_SUCCESS) {
-        fprintf(stderr, "Could not encrypt plaintext\n");
+        log_error("could not encrypt plaintext");
         return rc;
     }
 
@@ -23,21 +25,28 @@ static int encrypt_from_kms(
 }
 
 int app_lib_encrypt(
-    const struct app_ctx *ctx,
+    struct app_ctx *ctx,
     const struct kmstool_encrypt_params *params,
     unsigned char **ciphertext_out,
     unsigned int *ciphertext_out_len) {
     ssize_t rc = AWS_OP_ERR;
 
+    log_info("encrypt");
+    rc = kms_client_check_and_update(ctx);
+    if (rc != KMSTOOL_SUCCESS) {
+        log_error("kms client connection is not established");
+        return rc;
+    }
+
     if (params->plaintext == NULL || params->plaintext_len == 0) {
-        fprintf(stderr, "plaintext should not be NULL or empty\n");
+        log_error("plaintext should not be NULL or empty");
         *ciphertext_out = NULL;
         *ciphertext_out_len = 0;
         return KMSTOOL_ERROR;
     }
 
     if (params->plaintext_len > MAX_ENCRYPT_DATA_SIZE) {
-        fprintf(stderr, "plaintext too large (max size: %d bytes)\n", MAX_ENCRYPT_DATA_SIZE);
+        log_error("plaintext too large");
         *ciphertext_out = NULL;
         *ciphertext_out_len = 0;
         return KMSTOOL_ERROR;
@@ -46,7 +55,7 @@ int app_lib_encrypt(
     struct aws_byte_buf ciphertext_buf = {0};
     rc = encrypt_from_kms(ctx, params, &ciphertext_buf);
     if (rc != AWS_OP_SUCCESS) {
-        fprintf(stderr, "KMS encryption failed: %s\n", aws_error_str(aws_last_error()));
+        log_error("kms encryption failed");
         *ciphertext_out = NULL;
         *ciphertext_out_len = 0;
         return rc;
@@ -54,7 +63,7 @@ int app_lib_encrypt(
 
     uint8_t *output = malloc(ciphertext_buf.len);
     if (output == NULL) {
-        fprintf(stderr, "Failed to allocate memory for ciphertext output\n");
+        log_error("failed to allocate memory for ciphertext output");
         aws_byte_buf_clean_up_secure(&ciphertext_buf);
         *ciphertext_out = NULL;
         *ciphertext_out_len = 0;

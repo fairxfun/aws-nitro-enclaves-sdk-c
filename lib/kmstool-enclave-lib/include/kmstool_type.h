@@ -1,6 +1,9 @@
 #ifndef KMSTOOL_TYPE_H
 #define KMSTOOL_TYPE_H
 
+/* Default parent CID for vsock communication with the parent enclave */
+#define DEFAULT_PARENT_CID "3"
+
 struct app_ctx {
     /* Allocator to use for memory allocations. */
     struct aws_allocator *allocator;

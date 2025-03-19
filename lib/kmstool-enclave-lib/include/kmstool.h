@@ -7,5 +7,6 @@
 #include <aws/nitro_enclaves/nitro_enclaves.h>
 
 #include "../kmstool_enclave_lib.h"
+#include "./kmstool_kms_client.h"
 #include "./kmstool_type.h"
 #include "./kmstool_utils.h"
