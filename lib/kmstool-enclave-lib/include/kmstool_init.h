@@ -3,8 +3,8 @@
 
 #include "./kmstool.h"
 
-int app_lib_init(struct app_ctx *ctx, const struct kmstool_init_params *params);
-int app_lib_clean_up(struct app_ctx *ctx);
-int app_lib_update_aws_key(struct app_ctx *ctx, const struct kmstool_update_aws_key_params *params);
+int kmstool_lib_init(struct kmstool_lib_ctx *ctx, const struct kmstool_init_params *params);
+int kmstool_lib_clean_up(struct kmstool_lib_ctx *ctx);
+int kmstool_lib_update_aws_key(struct kmstool_lib_ctx *ctx, const struct kmstool_update_aws_key_params *params);
 
 #endif // KMSTOOL_INIT_H

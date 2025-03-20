@@ -3,7 +3,7 @@
 bool g_log_enabled = false;
 
 /* Encode the given text buffer to base64 and store it in text_b64 */
-int encode_b64(const struct app_ctx *ctx, const struct aws_byte_buf *text, struct aws_byte_buf *text_b64) {
+int encode_b64(const struct kmstool_lib_ctx *ctx, const struct aws_byte_buf *text, struct aws_byte_buf *text_b64) {
     log_info("encoding text to base64");
 
     ssize_t rc = AWS_OP_ERR;
@@ -29,7 +29,7 @@ int encode_b64(const struct app_ctx *ctx, const struct aws_byte_buf *text, struc
 }
 
 /* Decord the given text buffer from base64 and store it in text */
-int decode_b64(const struct app_ctx *ctx, const struct aws_string *text_b64, struct aws_byte_buf *text) {
+int decode_b64(const struct kmstool_lib_ctx *ctx, const struct aws_string *text_b64, struct aws_byte_buf *text) {
     log_info("decoding text from base64");
 
     ssize_t rc = AWS_OP_ERR;
@@ -60,10 +60,10 @@ int decode_b64(const struct app_ctx *ctx, const struct aws_string *text_b64, str
 
 inline void log_info(const char *message) {
     if (g_log_enabled) {
-        fprintf(stderr, "Kmstool lib info: %s\n", message);
+        fprintf(stderr, "kmstool lib info: %s\n", message);
     }
 }
 
 inline void log_error(const char *message) {
-    fprintf(stderr, "Kmstool lib error: %s\n", message);
+    fprintf(stderr, "kmstool lib error: %s\n", message);
 }
