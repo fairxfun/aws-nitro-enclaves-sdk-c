@@ -33,20 +33,9 @@ enum KMSTOOL_STATUS {
  * and encryption parameters.
  */
 struct kmstool_init_params {
-    const unsigned int enable_logging; /* Enable logging if set to 1 */
-
-    /* vsock port on which vsock-proxy is available in parent */
-    const unsigned int proxy_port;
-
-    /* AWS configuration */
     const char *aws_region;            /* AWS region for KMS operations */
-    const char *aws_access_key_id;     /* AWS access key ID */
-    const char *aws_secret_access_key; /* AWS secret access key */
-    const char *aws_session_token;     /* AWS session token */
-
-    /* KMS configuration */
-    const char *kms_key_id;               /* KMS key ID to use for operations */
-    const char *kms_encryption_algorithm; /* KMS encryption algorithm to use */
+    const unsigned int enable_logging; /* Enable logging if set to 1 */
+    const unsigned int proxy_port;     /* vsock port on which vsock-proxy is available in parent */
 };
 
 /**
@@ -67,6 +56,7 @@ struct kmstool_update_aws_key_params {
  * This structure contains the data to be encrypted using KMS.
  */
 struct kmstool_encrypt_params {
+    const char *kms_key_id;           /* KMS key ID to use for operations */
     const unsigned char *plaintext;   /* Data to encrypt */
     const unsigned int plaintext_len; /* Length of data to encrypt */
 };
@@ -77,6 +67,8 @@ struct kmstool_encrypt_params {
  * This structure contains the data to be decrypted using KMS.
  */
 struct kmstool_decrypt_params {
+    const char *kms_key_id;            /* KMS key ID to use for operations */
+    const char *kms_algorithm;         /* KMS encryption algorithm to use */
     const unsigned char *ciphertext;   /* Data to decrypt */
     const unsigned int ciphertext_len; /* Length of data to decrypt */
 };

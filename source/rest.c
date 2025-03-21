@@ -55,7 +55,10 @@ static void s_on_client_connection_shutdown(struct aws_http_connection *connecti
         fprintf(stderr, "Connection failed with error %s\n", aws_error_debug_str(error_code));
     }
 
-    if (rest_client->connection == connection) {
+    /* Clean up the connection */
+    if (rest_client->connection != NULL && rest_client->connection == connection) {
+        aws_http_connection_release(rest_client->connection); // Release the connection memory
+        rest_client->connection = NULL;
         rest_client->is_connected = false;
     }
 }
@@ -245,7 +248,10 @@ err_clean:
 
 void aws_nitro_enclaves_rest_client_destroy(struct aws_nitro_enclaves_rest_client *rest_client) {
     AWS_PRECONDITION(rest_client);
-    aws_http_connection_release(rest_client->connection);
+    if (rest_client->connection != NULL) {
+        aws_http_connection_release(rest_client->connection);
+        rest_client->connection = NULL;
+    }
     aws_tls_ctx_release(rest_client->tls_ctx);
     aws_mutex_clean_up(&rest_client->mutex);
     aws_condition_variable_clean_up(&rest_client->c_var);

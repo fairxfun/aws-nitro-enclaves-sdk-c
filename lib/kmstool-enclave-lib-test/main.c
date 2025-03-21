@@ -14,15 +14,18 @@ int main(int argc, char **argv) {
     struct kmstool_init_params params_init = {
         .aws_region = "",
         .proxy_port = 8000,
-        .aws_access_key_id = "",
-        .aws_secret_access_key = "",
-        .aws_session_token = "",
-        .kms_key_id = "",
-        .kms_encryption_algorithm = "SYMMETRIC_DEFAULT",
         .enable_logging = 1,
     };
 
     kmstool_enclave_init(&params_init);
+
+    struct kmstool_update_aws_key_params params_update_aws_key = {
+        .aws_access_key_id = "",
+        .aws_secret_access_key = "",
+        .aws_session_token = "",
+    };
+
+    kmstool_enclave_update_aws_key(&params_update_aws_key);
 
     for (int i = 0; i < 100; i++) {
         // Create a unique plaintext string for each iteration.
@@ -33,7 +36,10 @@ int main(int argc, char **argv) {
         sprintf((char *)plaintext_check, "test1234567890_%d", i);
 
         struct kmstool_encrypt_params params_encrypt = {
-            .plaintext = plaintext, .plaintext_len = strlen((char *)plaintext)};
+            .plaintext = plaintext,
+            .plaintext_len = strlen((char *)plaintext),
+            .kms_key_id = "",
+        };
 
         unsigned char *output_enc = NULL;
         unsigned int output_enc_len = 0;
@@ -45,7 +51,12 @@ int main(int argc, char **argv) {
 
         fprintf(stderr, "Encryption success with data length %d\n", output_enc_len);
 
-        struct kmstool_decrypt_params params_decrypt = {.ciphertext = output_enc, .ciphertext_len = output_enc_len};
+        struct kmstool_decrypt_params params_decrypt = {
+            .ciphertext = output_enc,
+            .ciphertext_len = output_enc_len,
+            .kms_key_id = "",
+            .kms_algorithm = "SYMMETRIC_DEFAULT",
+        };
 
         unsigned char *output_dec = NULL;
         unsigned int output_dec_len = 0;

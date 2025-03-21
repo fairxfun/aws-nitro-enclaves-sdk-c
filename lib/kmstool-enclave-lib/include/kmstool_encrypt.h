@@ -3,8 +3,8 @@
 
 #include "./kmstool.h"
 
-int app_lib_encrypt(
-    struct app_ctx *ctx,
+int kmstool_lib_encrypt(
+    struct kmstool_lib_ctx *ctx,
     const struct kmstool_encrypt_params *params,
     unsigned char **ciphertext_out,
     unsigned int *ciphertext_out_len);

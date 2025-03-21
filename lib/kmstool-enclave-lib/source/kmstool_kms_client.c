@@ -1,8 +1,7 @@
 #include "../include/kmstool.h"
-#include <unistd.h>
 
 /* Initialize KMS client with AWS credentials and vsock endpoint configuration */
-int kms_client_init(struct app_ctx *ctx) {
+static int kms_client_init(struct kmstool_lib_ctx *ctx) {
     log_info("initializing kms client");
 
     if (ctx->kms_client != NULL || ctx->aws_credentials != NULL) {
@@ -36,7 +35,7 @@ int kms_client_init(struct app_ctx *ctx) {
     return AWS_OP_SUCCESS;
 }
 
-int kms_client_destroy(struct app_ctx *ctx) {
+static int kms_client_destroy(struct kmstool_lib_ctx *ctx) {
     log_info("destroying kms client");
 
     if (ctx->kms_client != NULL) {
@@ -52,7 +51,7 @@ int kms_client_destroy(struct app_ctx *ctx) {
     return KMSTOOL_SUCCESS;
 }
 
-int kms_client_update(struct app_ctx *ctx) {
+static int kms_client_update(struct kmstool_lib_ctx *ctx) {
     log_info("update kms client");
 
     ssize_t rc = kms_client_destroy(ctx);
@@ -70,10 +69,10 @@ int kms_client_update(struct app_ctx *ctx) {
     return KMSTOOL_SUCCESS;
 }
 
-int kms_client_check_and_update(struct app_ctx *ctx) {
+int kms_client_check_and_update(struct kmstool_lib_ctx *ctx) {
     log_info("kms client check and update");
 
-    if (ctx->kms_client->rest_client->is_connected) {
+    if (ctx->kms_client != NULL && ctx->kms_client->rest_client->is_connected) {
         log_info("kms client connection is established, no need to update");
         return KMSTOOL_SUCCESS;
     }

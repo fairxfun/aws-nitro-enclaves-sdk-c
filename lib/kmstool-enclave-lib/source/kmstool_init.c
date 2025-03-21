@@ -1,16 +1,5 @@
 #include "../include/kmstool_init.h"
 
-/* Initialize app context with the provided parameters */
-static void app_ctx_init_with_params(struct app_ctx *ctx, const struct kmstool_init_params *params) {
-    ctx->proxy_port = params->proxy_port;
-    ctx->aws_region = aws_string_new_from_c_str(ctx->allocator, params->aws_region);
-    ctx->aws_access_key_id = aws_string_new_from_c_str(ctx->allocator, params->aws_access_key_id);
-    ctx->aws_secret_access_key = aws_string_new_from_c_str(ctx->allocator, params->aws_secret_access_key);
-    ctx->aws_session_token = aws_string_new_from_c_str(ctx->allocator, params->aws_session_token);
-    ctx->kms_key_id = aws_string_new_from_c_str(ctx->allocator, params->kms_key_id);
-    ctx->kms_encryption_algorithm = aws_string_new_from_c_str(ctx->allocator, params->kms_encryption_algorithm);
-}
-
 /**
  * Initialize the KMS Tool enclave library.
  *
@@ -26,41 +15,10 @@ static void app_ctx_init_with_params(struct app_ctx *ctx, const struct kmstool_i
  *
  * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
  */
-int app_lib_init(struct app_ctx *ctx, const struct kmstool_init_params *params) {
-    if (ctx->allocator != NULL || ctx->kms_client != NULL) {
+int kmstool_lib_init(struct kmstool_lib_ctx *ctx, const struct kmstool_init_params *params) {
+    if (ctx->allocator != NULL) {
         log_error("kms tool enclave lib has already been initialized");
         return KMSTOOL_SUCCESS;
-    }
-
-    /* Validate required parameters */
-    if (params->aws_region == NULL) {
-        log_error("aws region parameter is NULL");
-        return KMSTOOL_ERROR;
-    }
-
-    if (params->aws_access_key_id == NULL) {
-        log_error("aws access key ID parameter is NULL");
-        return KMSTOOL_ERROR;
-    }
-
-    if (params->aws_secret_access_key == NULL) {
-        log_error("aws secret access key parameter is NULL");
-        return KMSTOOL_ERROR;
-    }
-
-    if (params->aws_session_token == NULL) {
-        log_error("aws session token parameter is NULL");
-        return KMSTOOL_ERROR;
-    }
-
-    if (params->kms_key_id == NULL) {
-        log_error("kms key ID parameter is NULL");
-        return KMSTOOL_ERROR;
-    }
-
-    if (params->kms_encryption_algorithm == NULL) {
-        log_error("kms algorithm parameter is NULL");
-        return KMSTOOL_ERROR;
     }
 
     /* Initialize the AWS Nitro Enclaves library */
@@ -88,6 +46,7 @@ int app_lib_init(struct app_ctx *ctx, const struct kmstool_init_params *params) 
             aws_nitro_enclaves_library_clean_up();
             return KMSTOOL_ERROR;
         }
+
         struct aws_logger_standard_options options = {
             .file = stderr,
             .level = AWS_LL_INFO,
@@ -103,16 +62,8 @@ int app_lib_init(struct app_ctx *ctx, const struct kmstool_init_params *params) 
         aws_logger_set(ctx->logger);
     }
 
-    /* Initialize context with provided parameters */
-    app_ctx_init_with_params(ctx, params);
-
-    /* Initialize KMS client */
-    ssize_t rc = kms_client_init(ctx);
-    if (rc != AWS_OP_SUCCESS) {
-        log_error("failed to initialize KMS client");
-        app_lib_clean_up(ctx);
-        return KMSTOOL_ERROR;
-    }
+    ctx->proxy_port = params->proxy_port;
+    ctx->aws_region = aws_string_new_from_c_str(ctx->allocator, params->aws_region);
 
     return KMSTOOL_SUCCESS;
 }
@@ -130,40 +81,13 @@ int app_lib_init(struct app_ctx *ctx, const struct kmstool_init_params *params) 
  * @param ctx The KMS Tool enclave context to clean up
  * @return KMSTOOL_SUCCESS on success
  */
-int app_lib_clean_up(struct app_ctx *ctx) {
+int kmstool_lib_clean_up(struct kmstool_lib_ctx *ctx) {
     log_info("cleaning up kms tool lib");
 
-    if (ctx->aws_region) {
+    if (ctx->aws_region != NULL) {
         aws_string_destroy(ctx->aws_region);
         ctx->aws_region = NULL;
     }
-
-    if (ctx->aws_access_key_id) {
-        aws_string_destroy(ctx->aws_access_key_id);
-        ctx->aws_access_key_id = NULL;
-    }
-
-    if (ctx->aws_secret_access_key) {
-        aws_string_destroy(ctx->aws_secret_access_key);
-        ctx->aws_secret_access_key = NULL;
-    }
-
-    if (ctx->aws_session_token) {
-        aws_string_destroy(ctx->aws_session_token);
-        ctx->aws_session_token = NULL;
-    }
-
-    if (ctx->kms_key_id) {
-        aws_string_destroy(ctx->kms_key_id);
-        ctx->kms_key_id = NULL;
-    }
-
-    if (ctx->kms_encryption_algorithm) {
-        aws_string_destroy(ctx->kms_encryption_algorithm);
-        ctx->kms_encryption_algorithm = NULL;
-    }
-
-    // kms_client_destroy(ctx);
 
     aws_nitro_enclaves_library_clean_up();
 
@@ -171,6 +95,8 @@ int app_lib_clean_up(struct app_ctx *ctx) {
         free(ctx->logger);
         ctx->logger = NULL;
     }
+
+    // TODO: destroy kms client
 
     ctx->allocator = NULL;
     return KMSTOOL_SUCCESS;
@@ -186,7 +112,7 @@ int app_lib_clean_up(struct app_ctx *ctx) {
  * @param params New AWS credentials
  * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
  */
-int app_lib_update_aws_key(struct app_ctx *ctx, const struct kmstool_update_aws_key_params *params) {
+int kmstool_lib_update_aws_key(struct kmstool_lib_ctx *ctx, const struct kmstool_update_aws_key_params *params) {
     log_info("updating aws key");
 
     if (ctx->allocator == NULL) {
@@ -195,19 +121,19 @@ int app_lib_update_aws_key(struct app_ctx *ctx, const struct kmstool_update_aws_
     }
 
     /* Free previously allocated memory for aws_access_key_id if it exists */
-    if (ctx->aws_access_key_id) {
+    if (ctx->aws_access_key_id != NULL) {
         aws_string_destroy(ctx->aws_access_key_id);
     }
     ctx->aws_access_key_id = aws_string_new_from_c_str(ctx->allocator, params->aws_access_key_id);
 
     /* Similarly free and update aws_secret_access_key */
-    if (ctx->aws_secret_access_key) {
+    if (ctx->aws_secret_access_key != NULL) {
         aws_string_destroy(ctx->aws_secret_access_key);
     }
     ctx->aws_secret_access_key = aws_string_new_from_c_str(ctx->allocator, params->aws_secret_access_key);
 
     /* And free and update aws_session_token */
-    if (ctx->aws_session_token) {
+    if (ctx->aws_session_token != NULL) {
         aws_string_destroy(ctx->aws_session_token);
     }
     ctx->aws_session_token = aws_string_new_from_c_str(ctx->allocator, params->aws_session_token);

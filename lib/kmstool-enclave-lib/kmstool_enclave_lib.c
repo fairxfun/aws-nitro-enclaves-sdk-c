@@ -14,7 +14,7 @@
  */
 
 /* Global static application context for managing KMS operations */
-static struct app_ctx g_ctx = {0};
+static struct kmstool_lib_ctx g_ctx = {0};
 
 /* Define API export macro for different platforms */
 #ifdef _WIN32
@@ -33,7 +33,7 @@ static struct app_ctx g_ctx = {0};
  * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
  */
 API_EXPORT int kmstool_enclave_init(const struct kmstool_init_params *params) {
-    return app_lib_init(&g_ctx, params);
+    return kmstool_lib_init(&g_ctx, params);
 }
 
 /**
@@ -45,7 +45,7 @@ API_EXPORT int kmstool_enclave_init(const struct kmstool_init_params *params) {
  * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
  */
 API_EXPORT int kmstool_enclave_stop() {
-    return app_lib_clean_up(&g_ctx);
+    return kmstool_lib_clean_up(&g_ctx);
 }
 
 /**
@@ -58,7 +58,7 @@ API_EXPORT int kmstool_enclave_stop() {
  * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
  */
 API_EXPORT int kmstool_enclave_update_aws_key(const struct kmstool_update_aws_key_params *params) {
-    return app_lib_update_aws_key(&g_ctx, params);
+    return kmstool_lib_update_aws_key(&g_ctx, params);
 }
 
 /**
@@ -76,7 +76,7 @@ API_EXPORT int kmstool_enclave_encrypt(
     const struct kmstool_encrypt_params *params,
     unsigned char **ciphertext_out,
     unsigned int *ciphertext_out_len) {
-    return app_lib_encrypt(&g_ctx, params, ciphertext_out, ciphertext_out_len);
+    return kmstool_lib_encrypt(&g_ctx, params, ciphertext_out, ciphertext_out_len);
 }
 
 /**
@@ -94,5 +94,5 @@ API_EXPORT int kmstool_enclave_decrypt(
     const struct kmstool_decrypt_params *params,
     unsigned char **plaintext_out,
     unsigned int *plaintext_out_len) {
-    return app_lib_decrypt(&g_ctx, params, plaintext_out, plaintext_out_len);
+    return kmstool_lib_decrypt(&g_ctx, params, plaintext_out, plaintext_out_len);
 }
