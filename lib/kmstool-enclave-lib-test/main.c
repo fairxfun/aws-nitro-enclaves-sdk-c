@@ -27,6 +27,21 @@ int main(int argc, char **argv) {
 
     kmstool_enclave_update_aws_key(&params_update_aws_key);
 
+    struct kmstool_list_key_policies_params params_list_key_policies = {
+        .key_id = "",
+        .limit = 100,
+        .marker = NULL,
+    };
+
+    unsigned int response_json_len = 0;
+    unsigned char *response_json_out = NULL;
+
+    kmstool_enclave_list_key_policies(&params_list_key_policies, &response_json_len, &response_json_out);
+    printf("response_json_len: %d\n", response_json_len);
+    printf("response_json_out: %s\n", response_json_out);
+    free(response_json_out);
+    response_json_out = NULL;
+
     for (int i = 0; i < 100; i++) {
         // Create a unique plaintext string for each iteration.
         uint8_t plaintext[256];
@@ -44,7 +59,7 @@ int main(int argc, char **argv) {
         unsigned char *output_enc = NULL;
         unsigned int output_enc_len = 0;
         // Encrypt the plaintext.
-        if (kmstool_enclave_encrypt(&params_encrypt, &output_enc, &output_enc_len) != 0 || output_enc == NULL) {
+        if (kmstool_enclave_encrypt(&params_encrypt, &output_enc_len, &output_enc) != 0 || output_enc == NULL) {
             fprintf(stderr, "Encryption failed at iteration %d\n", i);
             exit(EXIT_FAILURE);
         }
@@ -62,7 +77,7 @@ int main(int argc, char **argv) {
         unsigned int output_dec_len = 0;
 
         // Decrypt the ciphertext.
-        if (kmstool_enclave_decrypt(&params_decrypt, &output_dec, &output_dec_len) != 0 || output_dec == NULL) {
+        if (kmstool_enclave_decrypt(&params_decrypt, &output_dec_len, &output_dec) != 0 || output_dec == NULL) {
             fprintf(stderr, "Decryption failed at iteration %d\n", i);
             free(output_enc);
             exit(EXIT_FAILURE);

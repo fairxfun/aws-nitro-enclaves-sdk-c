@@ -1,7 +1,5 @@
 #include "kmstool_enclave_lib.h"
-#include "include/kmstool_decrypt.h"
-#include "include/kmstool_encrypt.h"
-#include "include/kmstool_init.h"
+#include "include/kmstool_api.h"
 
 /**
  * @file kmstool_enclave_lib.c
@@ -61,6 +59,40 @@ API_EXPORT int kmstool_enclave_update_aws_key(const struct kmstool_update_aws_ke
     return kmstool_lib_update_aws_key(&g_ctx, params);
 }
 
+/**     
+ * @brief List key policies for a KMS key
+ *
+ * This function lists the key policies for a specified KMS key.
+ *
+ * @param params Pointer to the parameters for the ListKeyPolicies operation
+ * @param response_json_out Pointer to store the raw JSON response
+ * @param response_json_len Pointer to store the length of the raw JSON response
+ * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
+ */
+API_EXPORT int kmstool_enclave_list_key_policies(
+    const struct kmstool_list_key_policies_params *params,
+    unsigned int *response_json_len,
+    unsigned char **response_json_out) {
+    return kmstool_lib_list_key_policies(&g_ctx, params, response_json_len, response_json_out);
+}
+
+/**
+ * @brief Get key policy for a KMS key
+ *
+ * This function gets the key policy for a specified KMS key.
+ *
+ * @param params Pointer to the parameters for the GetKeyPolicy operation
+ * @param response_json_out Pointer to store the raw JSON response
+ * @param response_json_len Pointer to store the length of the raw JSON response
+ * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
+ */
+API_EXPORT int kmstool_enclave_get_key_policy(
+    const struct kmstool_get_key_policy_params *params,
+    unsigned int *response_json_len,
+    unsigned char **response_json_out) {
+    return kmstool_lib_get_key_policy(&g_ctx, params, response_json_len, response_json_out);
+}
+
 /**
  * @brief Encrypt data using KMS
  *
@@ -74,9 +106,9 @@ API_EXPORT int kmstool_enclave_update_aws_key(const struct kmstool_update_aws_ke
  */
 API_EXPORT int kmstool_enclave_encrypt(
     const struct kmstool_encrypt_params *params,
-    unsigned char **ciphertext_out,
-    unsigned int *ciphertext_out_len) {
-    return kmstool_lib_encrypt(&g_ctx, params, ciphertext_out, ciphertext_out_len);
+    unsigned int *ciphertext_out_len,
+    unsigned char **ciphertext_out) {
+    return kmstool_lib_encrypt(&g_ctx, params, ciphertext_out_len, ciphertext_out);
 }
 
 /**
@@ -92,7 +124,16 @@ API_EXPORT int kmstool_enclave_encrypt(
  */
 API_EXPORT int kmstool_enclave_decrypt(
     const struct kmstool_decrypt_params *params,
-    unsigned char **plaintext_out,
-    unsigned int *plaintext_out_len) {
-    return kmstool_lib_decrypt(&g_ctx, params, plaintext_out, plaintext_out_len);
+    unsigned int *plaintext_out_len,
+    unsigned char **plaintext_out) {
+    return kmstool_lib_decrypt(&g_ctx, params, plaintext_out_len, plaintext_out);
+}
+
+/**
+ * @brief Get attestation document for the enclave
+ *
+ * This function gets the attestation document for the enclave.
+ */
+API_EXPORT int kmstool_enclave_get_attestation_document(unsigned int *response_json_len, unsigned char **response_json_out) {
+    return kmstool_lib_get_attestation_document(&g_ctx, response_json_len, response_json_out);
 }

@@ -51,6 +51,23 @@ struct kmstool_update_aws_key_params {
 };
 
 /**
+ * Parameters for the ListKeyPolicies operation.
+ */
+struct kmstool_list_key_policies_params {
+    /** The identifier of the KMS key to list policies for */
+    const char *key_id;
+    /** Maximum number of items to return (-1 for no limit) */
+    unsigned int limit;
+    /** Pagination token from a previous request (can be NULL) */
+    const char *marker;
+};
+
+struct kmstool_get_key_policy_params {
+    const char *key_id;
+    const char *policy_name;
+};
+
+/**
  * @brief Parameters for encryption operation
  *
  * This structure contains the data to be encrypted using KMS.
@@ -106,6 +123,36 @@ int kmstool_enclave_stop(void);
 int kmstool_enclave_update_aws_key(const struct kmstool_update_aws_key_params *params);
 
 /**
+ * @brief List key policies for a KMS key
+ *
+ * This function lists the key policies for a specified KMS key.
+ *
+ * @param params Pointer to the parameters for the ListKeyPolicies operation
+ * @param response_json_out Pointer to store the raw JSON response
+ * @param response_json_len Pointer to store the length of the raw JSON response
+ * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
+ */
+int kmstool_enclave_list_key_policies(
+    const struct kmstool_list_key_policies_params *params,
+    unsigned int *response_json_len,
+    unsigned char **response_json_out);
+
+/**
+ * @brief Get key policy for a KMS key
+ *
+ * This function gets the key policy for a specified KMS key.
+ *
+ * @param params Pointer to the parameters for the GetKeyPolicy operation
+ * @param response_json_out Pointer to store the raw JSON response
+ * @param response_json_len Pointer to store the length of the raw JSON response
+ * @return KMSTOOL_SUCCESS on success, KMSTOOL_ERROR on failure
+ */
+int kmstool_enclave_get_key_policy(
+    const struct kmstool_get_key_policy_params *params,
+    unsigned int *response_json_len,
+    unsigned char **response_json_out);
+
+/**
  * @brief Encrypt data using KMS
  *
  * This function encrypts the provided plaintext using the configured KMS key
@@ -118,8 +165,8 @@ int kmstool_enclave_update_aws_key(const struct kmstool_update_aws_key_params *p
  */
 int kmstool_enclave_encrypt(
     const struct kmstool_encrypt_params *params,
-    unsigned char **ciphertext_out,
-    unsigned int *ciphertext_out_len);
+    unsigned int *ciphertext_out_len,
+    unsigned char **ciphertext_out);
 
 /**
  * @brief Decrypt data using KMS
@@ -134,8 +181,18 @@ int kmstool_enclave_encrypt(
  */
 int kmstool_enclave_decrypt(
     const struct kmstool_decrypt_params *params,
-    unsigned char **plaintext_out,
-    unsigned int *plaintext_out_len);
+    unsigned int *plaintext_out_len,
+    unsigned char **plaintext_out);
+
+/**
+ * @brief Get attestation document for the enclave
+ *
+ * This function gets the attestation document for the enclave.
+ *
+ * @param response_json_len Pointer to store the length of the raw JSON response
+ * @param response_json_out Pointer to store the raw JSON response
+ */
+int kmstool_enclave_get_attestation_document(unsigned int *response_json_len, unsigned char **response_json_out);
 
 #ifdef __cplusplus
 }

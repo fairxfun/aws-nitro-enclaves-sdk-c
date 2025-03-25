@@ -18,6 +18,7 @@
 #define KMS_ENCRYPTION_CONTEXT "EncryptionContext"
 #define KMS_GRANT_TOKENS "GrantTokens"
 #define KMS_KEY_ID "KeyId"
+#define KMS_POLICY_NAME "PolicyName"
 #define KMS_RECIPIENT "Recipient"
 #define KMS_PUBLIC_KEY "PublicKey"
 #define KMS_KEY_ENCRYPTION_ALGORITHM "KeyEncryptionAlgorithm"
@@ -2609,6 +2610,10 @@ static struct aws_byte_cursor kms_target_generate_data_key =
     AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.GenerateDataKey");
 static struct aws_byte_cursor kms_target_generate_random =
     AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.GenerateRandom");
+static struct aws_byte_cursor kms_target_list_key_policies =
+    AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.ListKeyPolicies");
+static struct aws_byte_cursor kms_target_get_key_policy =
+    AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.GetKeyPolicy");
 
 static struct aws_kms_decrypt_response *s_kms_get_decrypt_response_from_request(
     struct aws_nitro_enclaves_kms_client *client,
@@ -2975,4 +2980,289 @@ err_clean:
     aws_string_destroy(request);
     aws_string_destroy(response);
     return AWS_OP_ERR;
+}
+
+struct aws_kms_list_key_policies_request *aws_kms_list_key_policies_request_new(struct aws_allocator *allocator) {
+    if (allocator == NULL) {
+        allocator = aws_nitro_enclaves_get_allocator();
+    }
+
+    struct aws_kms_list_key_policies_request *request =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_kms_list_key_policies_request));
+    if (request == NULL) {
+        return NULL;
+    }
+
+    request->allocator = allocator;
+    return request;
+}
+
+void aws_kms_list_key_policies_request_destroy(struct aws_kms_list_key_policies_request *request) {
+    if (request == NULL) {
+        return;
+    }
+
+    if (request->key_id != NULL) {
+        aws_string_destroy(request->key_id);
+    }
+    if (request->marker != NULL) {
+        aws_string_destroy(request->marker);
+    }
+
+    aws_mem_release(request->allocator, request);
+    request = NULL;
+}
+
+struct aws_string *aws_kms_list_key_policies_request_to_json(const struct aws_kms_list_key_policies_request *request) {
+    AWS_PRECONDITION(request);
+    AWS_PRECONDITION(aws_allocator_is_valid(request->allocator));
+    AWS_PRECONDITION(aws_string_is_valid(request->key_id));
+
+    struct json_object *obj = json_object_new_object();
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    /* Required parameter */
+    if (s_string_to_json(obj, KMS_KEY_ID, aws_string_c_str(request->key_id)) != AWS_OP_SUCCESS) {
+        goto clean_up;
+    }
+
+    /* Optional parameters */
+    if (request->limit > 0) {
+        if (s_int_to_json(obj, "Limit", request->limit) != AWS_OP_SUCCESS) {
+            goto clean_up;
+        }
+    }
+
+    if (request->marker != NULL) {
+        if (s_string_to_json(obj, "Marker", aws_string_c_str(request->marker)) != AWS_OP_SUCCESS) {
+            goto clean_up;
+        }
+    }
+
+    struct aws_string *json = s_aws_string_from_json(request->allocator, obj);
+    if (json == NULL) {
+        goto clean_up;
+    }
+
+    json_object_put(obj);
+    return json;
+
+clean_up:
+    json_object_put(obj);
+    return NULL;
+}
+
+int aws_kms_list_key_policies_from_request(
+    struct aws_nitro_enclaves_kms_client *client,
+    const struct aws_kms_list_key_policies_request *request_structure,
+    struct aws_byte_buf *response_json) {
+    AWS_PRECONDITION(client != NULL);
+    AWS_PRECONDITION(request_structure != NULL);
+    AWS_PRECONDITION(response_json != NULL);
+
+    struct aws_string *response = NULL;
+    struct aws_string *request = NULL;
+    int rc = 0;
+
+    request = aws_kms_list_key_policies_request_to_json(request_structure);
+    if (request == NULL) {
+        fprintf(stderr, "Failed to convert request to json\n");
+        return AWS_OP_ERR;
+    }
+
+    rc = s_aws_nitro_enclaves_kms_client_call_blocking(client, kms_target_list_key_policies, request, &response);
+    aws_string_destroy(request);
+    request = NULL;
+
+    if (rc != 200) {
+        fprintf(stderr, "Got non-200 answer from KMS: %d\n", rc);
+        if (response != NULL) {
+            aws_string_destroy(response);
+            response = NULL;
+        }
+        return AWS_OP_ERR;
+    }
+
+    const struct aws_byte_cursor cursor = aws_byte_cursor_from_string(response);
+    aws_byte_buf_init_copy_from_cursor(response_json, client->allocator, cursor);
+    aws_string_destroy(response);
+    response = NULL;
+    return AWS_OP_SUCCESS;
+}
+
+int aws_kms_list_key_policies_blocking(
+    struct aws_nitro_enclaves_kms_client *client,
+    const struct aws_string *key_id,
+    int limit,
+    const struct aws_string *marker,
+    struct aws_byte_buf *response_json) {
+    AWS_PRECONDITION(client != NULL);
+    AWS_PRECONDITION(key_id != NULL);
+    AWS_PRECONDITION(response_json != NULL);
+
+    if (limit < 0 || limit > 1000) {
+        return AWS_OP_ERR;
+    }
+
+    struct aws_kms_list_key_policies_request *request = aws_kms_list_key_policies_request_new(client->allocator);
+    if (request == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    request->key_id = aws_string_clone_or_reuse(client->allocator, key_id);
+    if (request->key_id == NULL) {
+        aws_kms_list_key_policies_request_destroy(request);
+        return AWS_OP_ERR;
+    }
+
+    request->limit = limit;
+    if (marker != NULL) {
+        request->marker = aws_string_clone_or_reuse(client->allocator, marker);
+        if (request->marker == NULL) {
+            aws_kms_list_key_policies_request_destroy(request);
+            return AWS_OP_ERR;
+        }
+    }
+
+    int rc = aws_kms_list_key_policies_from_request(client, request, response_json);
+    aws_kms_list_key_policies_request_destroy(request);
+    return rc;
+}
+
+struct aws_kms_get_key_policy_request *aws_kms_get_key_policy_request_new(struct aws_allocator *allocator) {
+    if (allocator == NULL) {
+        allocator = aws_nitro_enclaves_get_allocator();
+    }
+
+    struct aws_kms_get_key_policy_request *request =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_kms_get_key_policy_request));
+    if (request == NULL) {
+        return NULL;
+    }
+
+    request->allocator = allocator;
+    return request;
+}
+
+struct aws_string *aws_kms_get_key_policy_request_to_json(const struct aws_kms_get_key_policy_request *request) {
+    AWS_PRECONDITION(request);
+    AWS_PRECONDITION(aws_allocator_is_valid(request->allocator));
+    AWS_PRECONDITION(aws_string_is_valid(request->key_id));
+    AWS_PRECONDITION(aws_string_is_valid(request->policy_name));
+    
+    struct json_object *obj = json_object_new_object();
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    if (s_string_to_json(obj, KMS_KEY_ID, aws_string_c_str(request->key_id)) != AWS_OP_SUCCESS) {
+        goto clean_up;
+    }
+
+    if (s_string_to_json(obj, KMS_POLICY_NAME, aws_string_c_str(request->policy_name)) != AWS_OP_SUCCESS) {
+        goto clean_up;
+    }
+
+    struct aws_string *json = s_aws_string_from_json(request->allocator, obj);
+    if (json == NULL) {
+        goto clean_up;
+    }
+    
+    json_object_put(obj);
+    return json;
+
+clean_up:
+    json_object_put(obj);
+    return NULL;
+}
+
+void aws_kms_get_key_policy_request_destroy(struct aws_kms_get_key_policy_request *request) {
+    if (request == NULL) {
+        return;
+    }
+
+    if (request->key_id != NULL) {
+        aws_string_destroy(request->key_id);    
+    }
+
+    if (request->policy_name != NULL) {
+        aws_string_destroy(request->policy_name);
+    }
+
+    aws_mem_release(request->allocator, request);
+    request = NULL;
+}
+
+int aws_kms_get_key_policy_from_request(
+    struct aws_nitro_enclaves_kms_client *client,
+    const struct aws_kms_get_key_policy_request *request_structure,
+    struct aws_byte_buf *response_json) {
+    AWS_PRECONDITION(client != NULL);
+    AWS_PRECONDITION(request_structure != NULL);
+    AWS_PRECONDITION(response_json != NULL);
+
+    struct aws_string *response = NULL;
+    struct aws_string *request = NULL;
+    int rc = 0;
+
+    request = aws_kms_get_key_policy_request_to_json(request_structure);
+    if (request == NULL) {
+        fprintf(stderr, "Failed to convert request to json\n");
+        return AWS_OP_ERR;
+    }
+
+    rc = s_aws_nitro_enclaves_kms_client_call_blocking(client, kms_target_get_key_policy, request, &response);
+    aws_string_destroy(request);
+    request = NULL;
+
+    if (rc != 200) {
+        fprintf(stderr, "Got non-200 answer from KMS: %d\n", rc);
+        if (response != NULL) {
+            aws_string_destroy(response);
+            response = NULL;
+        }
+        return AWS_OP_ERR;
+    }
+
+    const struct aws_byte_cursor cursor = aws_byte_cursor_from_string(response);
+    aws_byte_buf_init_copy_from_cursor(response_json, client->allocator, cursor);
+    aws_string_destroy(response);
+    response = NULL;
+    return AWS_OP_SUCCESS;
+}
+
+
+int aws_kms_get_key_policy_blocking(
+    struct aws_nitro_enclaves_kms_client *client,
+    const struct aws_string *key_id,
+    const struct aws_string *policy_name,
+    struct aws_byte_buf *response_json) {
+    AWS_PRECONDITION(client != NULL);
+    AWS_PRECONDITION(key_id != NULL);
+    AWS_PRECONDITION(policy_name != NULL);
+    AWS_PRECONDITION(response_json != NULL);
+
+    struct aws_kms_get_key_policy_request *request = aws_kms_get_key_policy_request_new(client->allocator);
+    if (request == NULL) {
+        fprintf(stderr, "Failed to convert request to json\n");
+        return AWS_OP_ERR;
+    }
+
+    request->key_id = aws_string_clone_or_reuse(client->allocator, key_id);
+    if (request->key_id == NULL) {
+        aws_kms_get_key_policy_request_destroy(request);
+        return AWS_OP_ERR;
+    }
+
+    request->policy_name = aws_string_clone_or_reuse(client->allocator, policy_name);
+    if (request->policy_name == NULL) {
+        aws_kms_get_key_policy_request_destroy(request);
+        return AWS_OP_ERR;
+    }
+
+    int rc = aws_kms_get_key_policy_from_request(client, request, response_json);
+    aws_kms_get_key_policy_request_destroy(request);
+    return rc;
 }
