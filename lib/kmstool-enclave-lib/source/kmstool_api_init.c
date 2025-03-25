@@ -1,4 +1,4 @@
-#include "../include/kmstool_init.h"
+#include "../include/kmstool_api.h"
 
 /**
  * Initialize the KMS Tool enclave library.
@@ -19,6 +19,11 @@ int kmstool_lib_init(struct kmstool_lib_ctx *ctx, const struct kmstool_init_para
     if (ctx->allocator != NULL) {
         log_error("kms tool enclave lib has already been initialized");
         return KMSTOOL_SUCCESS;
+    }
+
+    if (params->aws_region == NULL) {
+        log_error("aws region is not set");
+        return KMSTOOL_ERROR;
     }
 
     /* Initialize the AWS Nitro Enclaves library */

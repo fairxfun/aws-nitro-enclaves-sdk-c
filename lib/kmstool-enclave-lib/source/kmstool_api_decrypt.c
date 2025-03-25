@@ -1,4 +1,4 @@
-#include "../include/kmstool_decrypt.h"
+#include "../include/kmstool_api.h"
 
 /* Decrypt the given ciphertext using KMS and store the result in the plaintext buffer */
 static int decrypt_from_kms(
@@ -24,19 +24,14 @@ static int decrypt_from_kms(
     aws_byte_buf_clean_up_secure(&ciphertext);
     aws_string_destroy(kms_key_id);
     aws_string_destroy(kms_algorithm);
-    if (rc != AWS_OP_SUCCESS) {
-        log_error("could not decrypt ciphertext");
-        return rc;
-    }
-
-    return AWS_OP_SUCCESS;
+    return rc;
 }
 
 int kmstool_lib_decrypt(
     struct kmstool_lib_ctx *ctx,
     const struct kmstool_decrypt_params *params,
-    unsigned char **plaintext_out,
-    unsigned int *plaintext_out_len) {
+    unsigned int *plaintext_out_len,
+    unsigned char **plaintext_out) {
     ssize_t rc = AWS_OP_ERR;
 
     log_info("decrypt");

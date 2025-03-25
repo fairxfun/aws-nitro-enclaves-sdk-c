@@ -5,6 +5,7 @@
 
 #include <aws/nitro_enclaves/kms.h>
 #include <aws/testing/aws_test_harness.h>
+#include <json-c/json.h>
 
 /**
  * Data used for JSON serialization and deserialization.
@@ -2068,4 +2069,75 @@ static int s_test_kms_generate_random_response_from_json_with_unknown(struct aws
     aws_kms_generate_random_response_destroy(response);
 
     return SUCCESS;
+}
+
+AWS_TEST_CASE(test_kms_list_key_policies_request_to_json, s_test_kms_list_key_policies_request_to_json)
+static int s_test_kms_list_key_policies_request_to_json(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_kms_list_key_policies_request *request = aws_kms_list_key_policies_request_new(allocator);
+    ASSERT_NOT_NULL(request);
+
+    request->key_id = aws_string_new_from_c_str(allocator, "test-key-id");
+    request->limit = 10;
+    request->marker = aws_string_new_from_c_str(allocator, "test-marker");
+
+    struct aws_string *json = aws_kms_list_key_policies_request_to_json(request);
+    ASSERT_NOT_NULL(json);
+
+    struct json_object *parsed = json_tokener_parse(aws_string_c_str(json));
+    ASSERT_NOT_NULL(parsed);
+
+    struct json_object *key_id_obj = NULL;
+    ASSERT_TRUE(json_object_object_get_ex(parsed, "KeyId", &key_id_obj));
+    const char *key_id_str = json_object_get_string(key_id_obj);
+    ASSERT_STR_EQUALS(key_id_str, aws_string_c_str(request->key_id));
+
+    struct json_object *limit_obj = NULL;
+    ASSERT_TRUE(json_object_object_get_ex(parsed, "Limit", &limit_obj));
+    ASSERT_INT_EQUALS(json_object_get_int(limit_obj), request->limit);
+
+    struct json_object *marker_obj = NULL;
+    ASSERT_TRUE(json_object_object_get_ex(parsed, "Marker", &marker_obj));
+    const char *marker_str = json_object_get_string(marker_obj);
+    ASSERT_STR_EQUALS(marker_str, aws_string_c_str(request->marker));
+
+    json_object_put(parsed);
+    aws_string_destroy(json);
+    aws_kms_list_key_policies_request_destroy(request);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_kms_get_key_policy_request_to_json, s_test_kms_get_key_policy_request_to_json)
+static int s_test_kms_get_key_policy_request_to_json(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_kms_get_key_policy_request *request = aws_kms_get_key_policy_request_new(allocator); 
+    ASSERT_NOT_NULL(request);
+
+    request->key_id = aws_string_new_from_c_str(allocator, "test-key-id");
+    request->policy_name = aws_string_new_from_c_str(allocator, "test-policy-name");
+
+    struct aws_string *json = aws_kms_get_key_policy_request_to_json(request);
+    ASSERT_NOT_NULL(json);
+
+    struct json_object *parsed = json_tokener_parse(aws_string_c_str(json));
+    ASSERT_NOT_NULL(parsed);
+
+    struct json_object *key_id_obj = NULL;
+    ASSERT_TRUE(json_object_object_get_ex(parsed, "KeyId", &key_id_obj));
+    const char *key_id_str = json_object_get_string(key_id_obj);
+    ASSERT_STR_EQUALS(key_id_str, aws_string_c_str(request->key_id));
+
+    struct json_object *policy_name_obj = NULL;
+    ASSERT_TRUE(json_object_object_get_ex(parsed, "PolicyName", &policy_name_obj));
+    const char *policy_name_str = json_object_get_string(policy_name_obj);
+    ASSERT_STR_EQUALS(policy_name_str, aws_string_c_str(request->policy_name));
+
+    json_object_put(parsed);
+    aws_string_destroy(json);
+    aws_kms_get_key_policy_request_destroy(request);
+
+    return AWS_OP_SUCCESS;
 }

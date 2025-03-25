@@ -1,4 +1,4 @@
-#include "../include/kmstool_encrypt.h"
+#include "../include/kmstool_api.h"
 
 #define MAX_ENCRYPT_DATA_SIZE 4096
 
@@ -18,19 +18,14 @@ static int encrypt_from_kms(
     rc = aws_kms_encrypt_blocking(ctx->kms_client, kms_key_id, &plaintext, ciphertext);
     aws_byte_buf_clean_up_secure(&plaintext);
     aws_string_destroy(kms_key_id);
-    if (rc != AWS_OP_SUCCESS) {
-        log_error("could not encrypt plaintext");
-        return rc;
-    }
-
-    return AWS_OP_SUCCESS;
+    return rc;
 }
 
 int kmstool_lib_encrypt(
     struct kmstool_lib_ctx *ctx,
     const struct kmstool_encrypt_params *params,
-    unsigned char **ciphertext_out,
-    unsigned int *ciphertext_out_len) {
+    unsigned int *ciphertext_out_len,
+    unsigned char **ciphertext_out) {
     ssize_t rc = AWS_OP_ERR;
 
     log_info("encrypt");

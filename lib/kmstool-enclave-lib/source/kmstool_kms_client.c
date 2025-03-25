@@ -77,5 +77,15 @@ int kms_client_check_and_update(struct kmstool_lib_ctx *ctx) {
         return KMSTOOL_SUCCESS;
     }
 
+    if (ctx->allocator == NULL) {
+        log_error("allocator is not set, should initialize lib before using kms client");
+        return KMSTOOL_ERROR;
+    }
+
+    if (ctx->aws_access_key_id == NULL || ctx->aws_secret_access_key == NULL || ctx->aws_session_token == NULL) {
+        log_error("aws credentials are not set, cannot update kms client");
+        return KMSTOOL_ERROR;
+    }
+
     return kms_client_update(ctx);
 }

@@ -6,6 +6,7 @@ the following AWS KMS APIs:
  * [Decrypt](./Decrypt.md)
  * [GenerateDataKey](./GenerateDataKey.md)
  * [GenerateRandom](./GenerateRandom.md)
+ * [ListKeyPolicies](./ListKeyPolicies.md)
 
 The `Recipient` request parameter must specify an `AttestationDocument` that includes a public key. After AWS KMS uses
 the CMK to decrypt the `CiphertextBlob` in the request, or to generate the Data Key or Random number, AWS KMS

@@ -49,6 +49,8 @@ add_test_case(test_basic_rest_client)
 add_test_case(test_rest_call_blocking)
 add_test_case(test_cms_parsing_correctness)
 add_test_case(test_cms_envelope_ctx_specific)
+add_test_case(test_kms_list_key_policies_request_to_json)
+add_test_case(test_kms_get_key_policy_request_to_json)
 
 set(TEST_BINARY_NAME ${PROJECT_NAME}-tests)
 generate_test_driver(${TEST_BINARY_NAME})
